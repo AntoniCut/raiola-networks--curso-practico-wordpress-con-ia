@@ -3,6 +3,7 @@
 workflow/
 
 # Copias de seguridad descargadas (contienen credenciales y datos sensibles)
+/backup/
 cafeteria-raiola_backup_*/
 db_*.sql.gz
 files_*.tar.gz
