@@ -161,12 +161,23 @@ class CRB_Job {
 			return;
 		}
 
-		$db_file       = $dir . '/db_' . $stamp . '.sql.gz';
-		$files_file    = $dir . '/files_' . $stamp . '.tar.gz';
-		$manifest_file = $dir . '/manifest_' . $stamp . '.json';
+		// La carpeta propia del backup: el sello (fecha y hora) da nombre a la carpeta.
+		$backup_dir    = $dir . '/' . $stamp;
+		$db_file       = $backup_dir . '/db_' . $stamp . '.sql.gz';
+		$files_file    = $backup_dir . '/files_' . $stamp . '.tar.gz';
+		$manifest_file = $backup_dir . '/manifest_' . $stamp . '.json';
 		$settings      = CRB_Settings::get();
 
 		try {
+			// Paso 0: crear la carpeta propia del backup.
+			self::step( 'folder', 'Creando la carpeta del backup…' );
+
+			if ( ! wp_mkdir_p( $backup_dir ) ) {
+				throw new Exception( 'No se pudo crear la carpeta del backup: ' . $backup_dir );
+			}
+
+			chmod( $backup_dir, 0700 );
+
 			// Paso 1: exportar la base de datos.
 			self::step( 'database', 'Exportando la base de datos…' );
 			$result = CRB_DB_Dump::dump( $db_file );
@@ -198,7 +209,7 @@ class CRB_Job {
 			// Paso 3: verificar la integridad de lo creado.
 			self::step( 'verifying', 'Verificando la integridad…' );
 			global $wpdb;
-			$verification = CRB_Verifier::verify( $dir, $stamp, $wpdb->prefix );
+			$verification = CRB_Verifier::verify( $backup_dir, $stamp, $wpdb->prefix );
 
 			// Paso 4: escribir el manifiesto con los datos del backup.
 			self::step( 'manifest', 'Guardando el manifiesto…' );
@@ -356,6 +367,14 @@ class CRB_Job {
 	 * @return void
 	 */
 	private static function remove_stamp_leftovers( $dir, $stamp ) {
+		// Formato nuevo: la carpeta completa del sello.
+		$folder = $dir . '/' . $stamp;
+
+		if ( is_dir( $folder ) ) {
+			CRB_Retention::remove_tree( $folder );
+		}
+
+		// Compatibilidad: archivos planos de versiones anteriores.
 		$files = array(
 			$dir . '/db_' . $stamp . '.sql.gz',
 			$dir . '/files_' . $stamp . '.tar.gz',

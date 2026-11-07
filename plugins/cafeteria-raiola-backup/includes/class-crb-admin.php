@@ -30,6 +30,7 @@ class CRB_Admin {
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'assets' ) );
 		add_action( 'admin_post_crb_save_settings', array( __CLASS__, 'save_settings' ) );
 		add_action( 'admin_post_crb_download_backup', array( 'CRB_Download', 'handle' ) );
+		add_action( 'admin_post_crb_download_package', array( 'CRB_Download', 'package' ) );
 		add_action( 'wp_ajax_crb_start_backup', array( __CLASS__, 'ajax_start_backup' ) );
 		add_action( 'wp_ajax_crb_get_status', array( __CLASS__, 'ajax_get_status' ) );
 		add_action( 'wp_ajax_crb_delete_backup', array( __CLASS__, 'ajax_delete_backup' ) );
@@ -70,9 +71,23 @@ class CRB_Admin {
 			'crb-admin',
 			'CRB_JS',
 			array(
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'crb_backup' ),
+				'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
+				'nonce'         => wp_create_nonce( 'crb_backup' ),
 				'statusRunning' => self::is_running(),
+				'downloadBase'  => add_query_arg(
+					array(
+						'action'   => 'crb_download_backup',
+						'_wpnonce' => wp_create_nonce( 'crb_download' ),
+					),
+					admin_url( 'admin-post.php' )
+				),
+				'packageBase'   => add_query_arg(
+					array(
+						'action'   => 'crb_download_package',
+						'_wpnonce' => wp_create_nonce( 'crb_download' ),
+					),
+					admin_url( 'admin-post.php' )
+				),
 			)
 		);
 	}
@@ -160,17 +175,26 @@ class CRB_Admin {
 
 		$stamp = isset( $_POST['stamp'] ) ? sanitize_text_field( wp_unslash( $_POST['stamp'] ) ) : '';
 
-		if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}_\d{4}$/', $stamp ) ) {
+		if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}_\d{4}$/D', $stamp ) ) {
 			wp_send_json_error( array( 'message' => 'Marca de tiempo inválida.' ) );
 		}
 
 		$dir    = CRB_Job::dir();
+		$deleted = 0;
+
+		// Formato nuevo: borra la carpeta completa del backup.
+		$folder = $dir . '/' . $stamp;
+
+		if ( is_dir( $folder ) ) {
+			$deleted += CRB_Retention::remove_tree( $folder ) ? 1 : 0;
+		}
+
+		// Compatibilidad: archivos planos de versiones anteriores.
 		$files  = array(
 			$dir . '/db_' . $stamp . '.sql.gz',
 			$dir . '/files_' . $stamp . '.tar.gz',
 			$dir . '/manifest_' . $stamp . '.json',
 		);
-		$deleted = 0;
 
 		foreach ( $files as $file ) {
 			if ( is_file( $file ) && @unlink( $file ) ) {
@@ -345,6 +369,11 @@ class CRB_Admin {
 			<?php if ( empty( $backups ) ) : ?>
 				<p class="crb-help">Todavía no hay backups. Creá el primero con el botón de arriba.</p>
 			<?php else : ?>
+				<p class="crb-help">
+					<strong>Descargar a carpeta</strong> abre el selector de carpetas del navegador (Chrome o Edge)
+					y guarda ahí la copia completa, en una subcarpeta con su fecha. En Firefox o Safari
+					baja un único archivo combinado.
+				</p>
 				<table class="widefat striped crb-table">
 					<thead>
 						<tr>
@@ -363,6 +392,7 @@ class CRB_Admin {
 								<td><?php echo esc_html( $backup['files_size'] ); ?></td>
 								<td><?php echo self::verification_badge( $backup['verification'] ); ?></td>
 								<td>
+									<button type="button" class="button button-small crb-download-folder" data-stamp="<?php echo esc_attr( $backup['stamp'] ); ?>">Descargar a carpeta</button>
 									<a class="button button-small" href="<?php echo esc_url( self::download_url( 'db', $backup['stamp'] ) ); ?>">Descargar BD</a>
 									<a class="button button-small" href="<?php echo esc_url( self::download_url( 'files', $backup['stamp'] ) ); ?>">Descargar archivos</a>
 									<?php if ( $backup['manifest'] ) : ?>
@@ -488,7 +518,7 @@ class CRB_Admin {
 				La restauración se hace por SSH porque necesita permisos de administrador del servidor.
 			</p>
 			<ol class="crb-steps">
-				<li>Copiá los archivos <code>db_STAMP.sql.gz</code> y <code>files_STAMP.tar.gz</code> al VPS (por <code>scp</code>) si los tenías en tu equipo.</li>
+				<li>Copiá los archivos <code>db_STAMP.sql.gz</code> y <code>files_STAMP.tar.gz</code> al VPS (por <code>scp</code>) si los tenías en tu equipo. En el servidor viven dentro de una carpeta con el mismo sello, por ejemplo <code>2026-11-07_1523/</code>.</li>
 				<li>Restaurá los archivos:
 					<pre class="crb-code-block">sudo tar -xzf files_STAMP.tar.gz -C /var/www/cafeteria-raiola
 sudo chown -R www-data:www-data /var/www/cafeteria-raiola</pre>
@@ -571,18 +601,30 @@ sudo chown -R www-data:www-data /var/www/cafeteria-raiola</pre>
 			return $backups;
 		}
 
-		$files = glob( $dir . '/db_*.sql.gz' );
+		$db_files = array();
 
-		if ( false === $files ) {
-			return $backups;
+		// Formato nuevo: cada backup vive en su carpeta con el sello.
+		$nested = glob( $dir . '/*/db_*.sql.gz' );
+
+		if ( is_array( $nested ) ) {
+			$db_files = array_merge( $db_files, $nested );
 		}
 
-		foreach ( $files as $db_file ) {
+		// Compatibilidad: archivos planos de la v1.0.0 en la raíz.
+		$flat = glob( $dir . '/db_*.sql.gz' );
+
+		if ( is_array( $flat ) ) {
+			$db_files = array_merge( $db_files, $flat );
+		}
+
+		foreach ( $db_files as $db_file ) {
 			$base  = basename( $db_file );
 			$stamp = substr( $base, 3, -7 ); // Quita db_ y .sql.gz.
 
-			$files_file = $dir . '/files_' . $stamp . '.tar.gz';
-			$manifest   = $dir . '/manifest_' . $stamp . '.json';
+			// La carpeta contenedora: la del sello o la raíz (v1.0.0).
+			$folder     = dirname( $db_file );
+			$files_file = $folder . '/files_' . $stamp . '.tar.gz';
+			$manifest   = $folder . '/manifest_' . $stamp . '.json';
 
 			$verification = 'unknown';
 			$has_manifest = is_file( $manifest );

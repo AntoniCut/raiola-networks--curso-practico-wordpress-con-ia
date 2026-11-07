@@ -31,7 +31,7 @@ Documento vivo que registra todos los cambios que hacemos sobre la instalación 
 | Elementor | 4.3.6 | Activo |
 | Novamira | 1.12.14 | Activo |
 | AI Provider for Anthropic | 1.0.5 | Activo |
-| Cafetería Raiola Backup | 1.0.0 | Activo |
+| Cafetería Raiola Backup | 1.1.0 | Activo |
 
 > Nota: los plugins empaquetados de ejemplo (Hello Dolly, Akismet) se eliminaron el 2026-11-06.
 
@@ -87,7 +87,7 @@ Documento vivo que registra todos los cambios que hacemos sobre la instalación 
 - Usuarios: 1 administrador.
 - Zona horaria: Europe/Madrid · Idioma: es_ES · Semana empieza: lunes.
 - WP-CLI: no instalado en el VPS.
-- Backups: plugin propio «Cafetería Raiola Backup» activo, carpeta `/var/backups/cafeteria-raiola` (dueño www-data, fuera del docroot), programación diaria a las 03:00, retención 14 días. Primer backup verificado: `2026-11-06_1241`.
+- Backups: plugin propio «Cafetería Raiola Backup» activo (v1.1.0), carpeta `/var/backups/cafeteria-raiola` (dueño www-data, fuera del docroot) con una subcarpeta por backup nombrada con el sello, programación diaria a las 03:00, retención 14 días. Último backup verificado: `2026-11-07_1359`.
 
 ### Infraestructura (VPS)
 
@@ -99,6 +99,8 @@ Documento vivo que registra todos los cambios que hacemos sobre la instalación 
 ## Bitácora
 
 ### 2026-11-07
+
+- **Plugin «Cafetería Raiola Backup» v1.1.0: carpetas por día/hora y descarga con selector de carpeta.** Cambio pedido: (1) cada backup se guarda en su propia subcarpeta nombrada con el sello (`/var/backups/cafeteria-raiola/2026-11-07_1359/` con `db_`, `files_` y `manifest_` dentro; `status.json` y `backup.log` quedan en la raíz), y (2) nuevo botón «Descargar a carpeta» que en Chrome/Edge abre el selector de carpetas nativo (File System Access API) y guarda ahí la copia completa en una subcarpeta con el sello; en Firefox/Safari baja un único `cafeteria-raiola_backup_STAMP.tar.gz` generado al vuelo con tar (la extensión zip de PHP no está cargada en el VPS; se usa `passthru` con `tar` directamente). Retención, listado, borrado y descarga mantienen compatibilidad con los backups planos de la v1.0.0 (`2026-11-06_1241` y `2026-11-07_0411` siguen visibles y descargables). **Desplegado por MCP** (subida del zip por upload link de Novamira + extracción con PclZip + activado, v1.1.0 verificada por `get_plugins()`). **Verificado por MCP en el servidor:** backup real `2026-11-07_1359` creado y verificado OK (DB 45 KB, archivos 52 MB) dentro de su carpeta con permisos 0700/0600; retención borró una carpeta falsa vieja de prueba sin tocar las reales; resolución de descarga y empaquetado tar probados para ambos formatos; página del plugin renderiza los 3 backups (1 nuevo + 2 planos) con 3 botones «Descargar a carpeta». **Verificador independiente + corrección:** la revisión encontró que `remove_tree()` seguía enlaces simbólicos en su entrada raíz (un enlace con nombre de sello habría borrado el destino fuera de la carpeta). Corregido: `remove_tree()` rechaza enlaces (`is_link` antes de `is_dir`), `cleanup()` se salta enlaces, el empaquetado usa nombres explícitos (no `.`), y los regex de sello llevan modificador `D`. Se añadió `tests/test-retention.php` (regresión: enlace raíz, carpeta real y salto de línea). Verificado de nuevo en producción con un enlace real: víctima intacta, enlace saltado, carpeta vieja real borrada y backups reales intactos; tests 3/3 en verde en el servidor. Pendiente solo la prueba manual del selector de carpetas en Chrome/Edge (no automatizable por MCP).
 
 - **Creación de la estructura de páginas (29 páginas nuevas).** Tras la investigación de arquitectura de marca + EEAT (alcance: cafetería física con newsletter de agenda y novedades), se crean por MCP (`wp_insert_post`) 29 páginas publicadas y vacías, pendientes de diseño con Elementor: Carta, Nuestro café, Nosotros, Equipo, Visítanos, Reseñas, Contacto, Preguntas frecuentes, Newsletter (+ hijas Confirmación y Baja), Blog, Aprende, Origen y sostenibilidad, Alérgenos, Política editorial, Prensa, Accesibilidad, Aviso legal, Política de cookies, Catas y talleres, Eventos privados, Café para casa, Tarjetas regalo, Trabaja con nosotros, Recetas, Orígenes, Glosario, Mapa del sitio. No se crean menús todavía. Se excluyen `guia-[barrio]` (falta el barrio real) y `equipo/[nombre]` (falta el equipo real). **Verificado por MCP:** 31 páginas publicadas en total (29 nuevas + Inicio ID 17 + Política de privacidad ID 3), slugs correctos, `confirmacion` (ID 46) y `baja` (ID 47) hijas de `newsletter` (ID 27), Inicio sigue como portada y Privacidad sigue enlazada como página de privacidad, 0 errores en `wp_insert_post`, papelera intacta (2).
 

@@ -11,8 +11,15 @@
 */
 
 /* `CRB_JS` lo inyecta WordPress con wp_localize_script. */
-/** @type {{ ajaxUrl: string, nonce: string, statusRunning: boolean }} - `Datos del servidor` */
+/** @type {{ ajaxUrl: string, nonce: string, statusRunning: boolean, downloadBase: string, packageBase: string }} - `Datos del servidor` */
 const CRB_JS = window.CRB_JS;
+
+/** @type {Array<{tipo: string, extension: string}>} - `Archivos que forman un backup` */
+const ARCHIVOS_BACKUP = [
+    { tipo: "db", extension: "sql.gz" },
+    { tipo: "files", extension: "tar.gz" },
+    { tipo: "manifest", extension: "json" },
+];
 
 /** @type {HTMLButtonElement} - `Botón crear backup` */
 const botonCrear = /** @type {HTMLButtonElement} */ (
@@ -51,6 +58,9 @@ const filaDiaSemana = /** @type {HTMLTableRowElement} */ (
 
 /** @type {NodeListOf<HTMLButtonElement>} - `Botones de borrar backups` */
 const botonesBorrar = document.querySelectorAll(".crb-delete");
+
+/** @type {NodeListOf<HTMLButtonElement>} - `Botones de descargar a carpeta` */
+const botonesDescargarCarpeta = document.querySelectorAll(".crb-download-folder");
 
 /**
  * -------------------------------------------------
@@ -275,6 +285,132 @@ const borrarBackup = async (boton) => {
 };
 
 /**
+ * -------------------------------------------------
+ * -----  `construirUrlDescarga(tipo, stamp)`  -----
+ * -------------------------------------------------
+ * - Arma la URL autenticada de descarga de un archivo del backup.
+ * @param {string} tipo - Tipo de archivo: db, files o manifest.
+ * @param {string} stamp - Marca de tiempo del backup.
+ * @return {string} - URL completa del archivo.
+ */
+const construirUrlDescarga = (tipo, stamp) => {
+
+    //  -----  devolver la URL base con el tipo y el sello  -----
+    return CRB_JS.downloadBase + "&type=" + encodeURIComponent(tipo) + "&stamp=" + encodeURIComponent(stamp);
+};
+
+/**
+ * ------------------------------------------------
+ * -----  `descargarConSelector(stamp)`  -----
+ * ------------------------------------------------
+ * - Abre el selector de carpetas del navegador y guarda ahí el backup completo.
+ * @param {string} stamp - Marca de tiempo del backup.
+ * @return {Promise<void>}
+ */
+const descargarConSelector = async (stamp) => {
+
+    /** @type {FileSystemDirectoryHandle} - `Carpeta elegida por el usuario` */
+    const carpetaDestino = await window.showDirectoryPicker();
+
+    //  -----  nombre de la subcarpeta que agrupa el backup  -----
+    const nombreCarpeta = "cafeteria-raiola_backup_" + stamp;
+
+    //  -----  crear (o abrir) la subcarpeta dentro del destino elegido  -----
+    const carpetaBackup = await carpetaDestino.getDirectoryHandle(nombreCarpeta, { create: true });
+
+    //  -----  contador de archivos guardados  -----
+    let guardados = 0;
+
+    //  -----  recorrer los archivos que forman el backup  -----
+    for (const archivo of ARCHIVOS_BACKUP) {
+
+        //  -----  avisar el archivo en curso  -----
+        mostrarResultado("Descargando " + archivo.tipo + " (" + (guardados + 1) + " de " + ARCHIVOS_BACKUP.length + ")…", false);
+
+        //  -----  pedir el archivo con la sesión del administrador  -----
+        const respuesta = await fetch(construirUrlDescarga(archivo.tipo, stamp), { credentials: "same-origin" });
+
+        //  -----  si el manifiesto no existe, saltarlo sin cortar el resto  -----
+        if (!respuesta.ok && archivo.tipo === "manifest") {
+            continue;
+        }
+
+        //  -----  si falló un archivo esencial, cortar con error  -----
+        if (!respuesta.ok) {
+            throw new Error("No se pudo descargar " + archivo.tipo + ".");
+        }
+
+        //  -----  crear la entrada del archivo en la carpeta elegida  -----
+        const manejador = await carpetaBackup.getFileHandle(
+            archivo.tipo + "_" + stamp + "." + archivo.extension,
+            { create: true }
+        );
+
+        //  -----  abrir el archivo para escribir los bytes  -----
+        const escritor = await manejador.createWritable();
+
+        //  -----  volcar el contenido recibido  -----
+        await escritor.write(await respuesta.blob());
+
+        //  -----  cerrar el archivo escrito  -----
+        await escritor.close();
+
+        //  -----  sumar uno al contador de guardados  -----
+        guardados++;
+    }
+
+    //  -----  avisar el resultado final en la página  -----
+    mostrarResultado(
+        "Backup guardado en la carpeta elegida (" + guardados + " de " + ARCHIVOS_BACKUP.length + " archivos).",
+        guardados !== ARCHIVOS_BACKUP.length
+    );
+};
+
+/**
+ * ---------------------------------------------
+ * -----  `descargarACarpeta(boton)`  -----
+ * ---------------------------------------------
+ * - Descarga un backup completo al equipo eligiendo la carpeta de destino.
+ * @param {HTMLButtonElement} boton - Botón de descarga pulsado.
+ * @return {Promise<void>}
+ */
+const descargarACarpeta = async (boton) => {
+
+    //  -----  marca de tiempo del backup a descargar  -----
+    const stamp = boton.dataset.stamp;
+
+    //  -----  desactivar el botón mientras dura la descarga  -----
+    boton.disabled = true;
+
+    //  -----  controlar los errores de la descarga  -----
+    try {
+        //  -----  si el navegador soporta el selector de carpetas, usarlo  -----
+        if ("showDirectoryPicker" in window) {
+            await descargarConSelector(stamp);
+        }
+        //  -----  si no, bajar el paquete combinado y que el navegador decida dónde  -----
+        else {
+            //  -----  navegar a la URL del paquete combinado  -----
+            window.location.href = CRB_JS.packageBase + "&stamp=" + encodeURIComponent(stamp);
+        }
+    }
+    //  -----  si se cerró el selector de carpetas, no es un error  -----
+    catch (error) {
+        //  -----  si se canceló la selección, quedarse en silencio  -----
+        if (error.name === "AbortError") {
+            boton.disabled = false;
+            return;
+        }
+
+        //  -----  cualquier otro fallo se muestra en la página  -----
+        mostrarResultado(error.message || "No se pudo descargar el backup.", true);
+    }
+
+    //  -----  volver a habilitar el botón  -----
+    boton.disabled = false;
+};
+
+/**
  * --------------------------------------
  * -----  `actualizarFilaDiaSemana()`  -----
  * --------------------------------------
@@ -329,6 +465,18 @@ botonesBorrar.forEach((boton) => {
 
         //  -----  borrar el backup de ese botón  -----
         borrarBackup(boton);
+    });
+});
+
+//  -----  enlazar el click de cada botón de descarga a carpeta  -----
+botonesDescargarCarpeta.forEach((boton) => {
+    boton.addEventListener("click", (event) => {
+
+        //  -----  evitar el comportamiento por defecto del botón  -----
+        event.preventDefault();
+
+        //  -----  descargar el backup a la carpeta elegida  -----
+        descargarACarpeta(boton);
     });
 });
 
