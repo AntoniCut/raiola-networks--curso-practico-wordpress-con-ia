@@ -29,6 +29,7 @@ Documento vivo que registra todos los cambios que hacemos sobre la instalación 
 | Plugin | Versión | Estado |
 |---|---|---|
 | Elementor | 4.3.6 | Activo |
+| PRO Elements | 4.3.2 | Activo |
 | Novamira | 1.12.15 | Activo |
 | AI Provider for Anthropic | 1.0.5 | Activo |
 | Cafetería Raiola Backup | 1.1.1 | Activo |
@@ -99,6 +100,8 @@ Documento vivo que registra todos los cambios que hacemos sobre la instalación 
 ## Bitácora
 
 ### 2026-11-07
+
+- **Instalación de PRO Elements v4.3.2 (alternativa libre GPL a Elementor Pro).** El usuario pidió instalar Elementor Pro de pago y eligió la opción gratuita comunitaria PRO Elements (proelements.org, GPLv3), que habilita las funciones Pro de Elementor (widgets Pro, Theme Builder, popups, formularios multi-paso) sin licencia ni costo. Aclarado lo que no incluye: kits/plantillas Pro ni soporte oficial. Descargado el zip oficial desde GitHub (`proelements/proelements`, release v4.3.2, 3,4 MB), verificado íntegro (1.711 archivos, header `Requires Plugins: elementor`, tested up to 4.3.2-ga). **Desplegado y verificado por MCP:** la subida por upload link falló con `413 Request Entity Too Large` (límite de `client_max_body_size` de Nginx; el zip pesa 3,4 MB), así que se usó la ruta probada con Elementor: descarga en el propio servidor con `download_url()` (md5 verificado `d917c75f…`, idéntico al inspeccionado localmente), extracción con PclZip sobre `WP_PLUGIN_DIR` (1.711 archivos) y activación sin errores. Verificado: PRO Elements 4.3.2 activo, Elementor 4.3.6 y Novamira siguen activos, `ELEMENTOR_PRO_VERSION` definida (4.3.2), frontend y `wp-login.php` devuelven HTTP 200 sin errores fatales, sin `debug.log` y `recently_activated` vacío. Zip de despliegue borrado del servidor.
 
 - **Corregido bug crítico de JavaScript en «Cafetería Raiola Backup» (v1.1.1).** El JS del admin nunca se ejecutó: WordPress inyecta `var CRB_JS = {...}` (wp_localize_script) y `admin.js` declaraba `const CRB_JS` en el ámbito global, lo que lanza `SyntaxError: Identifier 'CRB_JS' has already been declared` y aborta el script completo. Por eso ningún botón respondía (crear backup, borrar, descargar). Corregido usando un alias local `datosServidor` (sin tocar el global que inyecta WordPress). Versión subida a 1.1.1 para romper la caché del navegador (`admin.js?ver=1.1.1`). **Desplegado y verificado por MCP:** JS desplegado sin `const CRB_JS`, con 5 referencias a `datosServidor`, plugin 1.1.1 activo y página renderizando. Pendiente confirmación visual del usuario con recarga forzada (Ctrl+Shift+R).
 
