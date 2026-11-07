@@ -8,3 +8,6 @@ cafeteria-raiola_backup_*/
 db_*.sql.gz
 files_*.tar.gz
 manifest_*.json
+
+# Paquetes de despliegue del plugin (se generan al vuelo; el código vive en plugins/)
+cafeteria-raiola-backup-*.zip
