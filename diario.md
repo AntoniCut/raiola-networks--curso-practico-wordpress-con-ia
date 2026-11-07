@@ -21,7 +21,7 @@ Documento vivo que registra todos los cambios que hacemos sobre la instalación 
 | PHP | 8.3.36 |
 | Locale | es_ES |
 | Entorno | production |
-| Tema activo | Cafetería Raiola Child (hijo de Twenty Twenty-Five) |
+| Tema activo | Cafetería Raiola Hello Child (hijo de Hello Elementor 3.5.2) |
 | Conexión IA | Novamira v1.12.15 por MCP (OAuth), configurada en `opencode.json` |
 
 ### Plugins
@@ -100,6 +100,8 @@ Documento vivo que registra todos los cambios que hacemos sobre la instalación 
 ## Bitácora
 
 ### 2026-11-07
+
+- **Creación y activación del tema hijo «Cafetería Raiola Hello Child».** El usuario pidió un tema hijo del tema Hello Elementor y activarlo. Verificación previa por MCP: Hello Elementor 3.5.2 ya estaba instalado **y era el tema activo** (el diario estaba desactualizado: decía que el activo era «Cafetería Raiola Child» de Twenty Twenty-Five; corregido abajo). Se crea el hijo `cafeteria-raiola-hello-child` (Template: hello-elementor) con `style.css` y `functions.php` (enqueue del estilo del hijo con dependencias `hello-elementor` y `hello-elementor-theme-style`, patrón oficial de Hello Elementor), sin CSS adicional para no crear una capa de tokens paralela a Elementor. El diseño activo de Novamira («Cafetería Raiola: origen y tueste», autoridad design) se materializará en las stores globales de Elementor cuando se construyan las páginas. Pendiente: crear archivos por MCP, activar y verificar. **Creado, activado y verificado por MCP:** archivos escritos por PHP (style.css 620 B con header `Template: hello-elementor` y functions.php 584 B con enqueue dependiente de `hello-elementor` y `hello-elementor-theme-style`), `php -l` sin errores, `wp_get_theme()` reconoce el hijo con padre `hello-elementor`, `switch_theme()` aplicado (stylesheet `cafeteria-raiola-hello-child`, template `hello-elementor`), frontend y `wp-login.php` en HTTP 200 sin errores y con la hoja del hijo cargada. El hijo anterior «Cafetería Raiola Child» (TT5) sigue instalado e inactivo, no se borró.
 
 - **Instalación de PRO Elements v4.3.2 (alternativa libre GPL a Elementor Pro).** El usuario pidió instalar Elementor Pro de pago y eligió la opción gratuita comunitaria PRO Elements (proelements.org, GPLv3), que habilita las funciones Pro de Elementor (widgets Pro, Theme Builder, popups, formularios multi-paso) sin licencia ni costo. Aclarado lo que no incluye: kits/plantillas Pro ni soporte oficial. Descargado el zip oficial desde GitHub (`proelements/proelements`, release v4.3.2, 3,4 MB), verificado íntegro (1.711 archivos, header `Requires Plugins: elementor`, tested up to 4.3.2-ga). **Desplegado y verificado por MCP:** la subida por upload link falló con `413 Request Entity Too Large` (límite de `client_max_body_size` de Nginx; el zip pesa 3,4 MB), así que se usó la ruta probada con Elementor: descarga en el propio servidor con `download_url()` (md5 verificado `d917c75f…`, idéntico al inspeccionado localmente), extracción con PclZip sobre `WP_PLUGIN_DIR` (1.711 archivos) y activación sin errores. Verificado: PRO Elements 4.3.2 activo, Elementor 4.3.6 y Novamira siguen activos, `ELEMENTOR_PRO_VERSION` definida (4.3.2), frontend y `wp-login.php` devuelven HTTP 200 sin errores fatales, sin `debug.log` y `recently_activated` vacío. Zip de despliegue borrado del servidor.
 

@@ -10,8 +10,8 @@ Proyecto: sitio WordPress de Cafetería Raiola (https://cafeteria-raiola.antonyd
 
 ## Entorno (verificado)
 
-- WordPress 7.1.4 · PHP 8.3 · tema hijo «Cafetería Raiola Child» (padre Twenty Twenty-Five) · Elementor 4.3.6.
-- Plugins activos: Novamira 1.12.15, AI Provider for Anthropic 1.0.5, Cafetería Raiola Backup 1.1.1.
+- WordPress 7.1.4 · PHP 8.3 · tema hijo «Cafetería Raiola Hello Child» (padre Hello Elementor 3.5.2) · Elementor 4.3.6.
+- Plugins activos: Novamira 1.12.15, AI Provider for Anthropic 1.0.5, Cafetería Raiola Backup 1.1.1, PRO Elements 4.3.2.
 - VPS: Ubuntu 24.04, Nginx, MySQL, sin WP-CLI. La extensión `zip` de PHP no está cargada: descomprimir con PclZip.
 - MCP: Novamira por OAuth (`opencode.json`). Habilidades disponibles: `execute-php`, `create-upload-link`, `read-file`, `list-directory`, `edit-file`, entre otras.
 
