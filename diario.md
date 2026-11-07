@@ -31,7 +31,7 @@ Documento vivo que registra todos los cambios que hacemos sobre la instalación 
 | Elementor | 4.3.6 | Activo |
 | Novamira | 1.12.14 | Activo |
 | AI Provider for Anthropic | 1.0.5 | Activo |
-| Cafetería Raiola Backup | 1.1.0 | Activo |
+| Cafetería Raiola Backup | 1.1.1 | Activo |
 
 > Nota: los plugins empaquetados de ejemplo (Hello Dolly, Akismet) se eliminaron el 2026-11-06.
 
@@ -99,6 +99,8 @@ Documento vivo que registra todos los cambios que hacemos sobre la instalación 
 ## Bitácora
 
 ### 2026-11-07
+
+- **Corregido bug crítico de JavaScript en «Cafetería Raiola Backup» (v1.1.1).** El JS del admin nunca se ejecutó: WordPress inyecta `var CRB_JS = {...}` (wp_localize_script) y `admin.js` declaraba `const CRB_JS` en el ámbito global, lo que lanza `SyntaxError: Identifier 'CRB_JS' has already been declared` y aborta el script completo. Por eso ningún botón respondía (crear backup, borrar, descargar). Corregido usando un alias local `datosServidor` (sin tocar el global que inyecta WordPress). Versión subida a 1.1.1 para romper la caché del navegador (`admin.js?ver=1.1.1`). **Desplegado y verificado por MCP:** JS desplegado sin `const CRB_JS`, con 5 referencias a `datosServidor`, plugin 1.1.1 activo y página renderizando. Pendiente confirmación visual del usuario con recarga forzada (Ctrl+Shift+R).
 
 - **Borrados los backups planos antiguos (v1.0.0).** Con autorización del usuario, se borraron por MCP los dos juegos sueltos en la raíz de `/var/backups/cafeteria-raiola` (`2026-11-06_1241` y `2026-11-07_0411`, 6 archivos, ~104 MB) usando la misma lógica del botón «Borrar» del plugin, con entrada en `backup.log`. La carpeta queda con el backup vigente en formato carpeta (`2026-11-07_1359/`), `status.json` y `backup.log`.
 

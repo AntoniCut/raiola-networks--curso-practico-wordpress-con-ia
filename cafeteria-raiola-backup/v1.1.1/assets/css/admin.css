@@ -1,0 +1,160 @@
+/* Estilos de la página Copias de seguridad. */
+
+.crb-wrap {
+    max-width: 1100px;
+}
+
+.crb-intro {
+    font-size: 14px;
+    max-width: 700px;
+}
+
+.crb-card {
+    background: #ffffff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+
+.crb-card h2 {
+    margin-top: 0;
+    border-bottom: 1px solid #e2e4e7;
+    padding-bottom: 8px;
+}
+
+.crb-help {
+    color: #50575e;
+    font-size: 13px;
+}
+
+.crb-code {
+    background: #f0f0f1;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    word-break: break-all;
+}
+
+.crb-code-block {
+    background: #f0f0f1;
+    border: 1px solid #dcdcde;
+    padding: 10px 12px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.crb-checks {
+    list-style: none;
+    margin: 8px 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 8px;
+}
+
+.crb-checks li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.crb-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.crb-dot-ok {
+    background: #00a32a;
+}
+
+.crb-dot-error {
+    background: #d63638;
+}
+
+.crb-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.crb-progress .spinner {
+    float: none;
+    margin: 0;
+}
+
+.crb-result {
+    font-size: 13px;
+    font-weight: 600;
+    color: #00a32a;
+}
+
+.crb-result-error {
+    color: #d63638;
+}
+
+.crb-table {
+    max-width: 900px;
+}
+
+.crb-table th {
+    font-weight: 600;
+}
+
+.crb-table td .button {
+    margin-right: 4px;
+    margin-bottom: 2px;
+}
+
+.crb-badge {
+    display: inline-block;
+    background: #e2e4e7;
+    color: #2c3338;
+    border-radius: 3px;
+    padding: 2px 8px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.crb-badge-ok {
+    background: #d5f4df;
+    color: #007017;
+}
+
+.crb-badge-error {
+    background: #fbe3e3;
+    color: #b32d2e;
+}
+
+.crb-delete.crb-danger {
+    border-color: #d63638;
+    color: #d63638;
+}
+
+.crb-steps {
+    font-size: 13px;
+    line-height: 1.7;
+    margin-left: 18px;
+}
+
+.crb-log {
+    background: #f0f0f1;
+    border: 1px solid #dcdcde;
+    padding: 10px 12px;
+    border-radius: 4px;
+    overflow-x: auto;
+    max-height: 260px;
+    overflow-y: auto;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.hidden {
+    display: none;
+}

@@ -10,9 +10,10 @@
     *  ---------------------------------  *
 */
 
-/* `CRB_JS` lo inyecta WordPress con wp_localize_script. */
+/* WordPress inyecta el global `CRB_JS` con wp_localize_script.
+   Se copia a un nombre local: declarar `const CRB_JS` chocaría con el `var` global. */
 /** @type {{ ajaxUrl: string, nonce: string, statusRunning: boolean, downloadBase: string, packageBase: string }} - `Datos del servidor` */
-const CRB_JS = window.CRB_JS;
+const datosServidor = window.CRB_JS;
 
 /** @type {Array<{tipo: string, extension: string}>} - `Archivos que forman un backup` */
 const ARCHIVOS_BACKUP = [
@@ -80,7 +81,7 @@ const enviarPeticion = async (accion, datosExtra = {}) => {
     cuerpo.append("action", accion);
 
     //  -----  nonce de seguridad de WordPress  -----
-    cuerpo.append("_ajax_nonce", CRB_JS.nonce);
+    cuerpo.append("_ajax_nonce", datosServidor.nonce);
 
     //  -----  añadir cada campo extra al cuerpo  -----
     Object.entries(datosExtra).forEach(([clave, valor]) => {
@@ -88,7 +89,7 @@ const enviarPeticion = async (accion, datosExtra = {}) => {
     });
 
     //  -----  enviar la petición con las mismas credenciales del admin  -----
-    const respuesta = await fetch(CRB_JS.ajaxUrl, {
+    const respuesta = await fetch(datosServidor.ajaxUrl, {
         method: "POST",
         credentials: "same-origin",
         body: cuerpo,
@@ -296,7 +297,7 @@ const borrarBackup = async (boton) => {
 const construirUrlDescarga = (tipo, stamp) => {
 
     //  -----  devolver la URL base con el tipo y el sello  -----
-    return CRB_JS.downloadBase + "&type=" + encodeURIComponent(tipo) + "&stamp=" + encodeURIComponent(stamp);
+    return datosServidor.downloadBase + "&type=" + encodeURIComponent(tipo) + "&stamp=" + encodeURIComponent(stamp);
 };
 
 /**
@@ -391,7 +392,7 @@ const descargarACarpeta = async (boton) => {
         //  -----  si no, bajar el paquete combinado y que el navegador decida dónde  -----
         else {
             //  -----  navegar a la URL del paquete combinado  -----
-            window.location.href = CRB_JS.packageBase + "&stamp=" + encodeURIComponent(stamp);
+            window.location.href = datosServidor.packageBase + "&stamp=" + encodeURIComponent(stamp);
         }
     }
     //  -----  si se cerró el selector de carpetas, no es un error  -----
@@ -481,7 +482,7 @@ botonesDescargarCarpeta.forEach((boton) => {
 });
 
 //  -----  si ya hay un backup en curso al entrar, seguir su progreso  -----
-if (CRB_JS.statusRunning) {
+if (datosServidor.statusRunning) {
     parrafoProgreso.classList.remove("hidden");
     consultarEstado();
 }

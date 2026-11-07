@@ -4,7 +4,7 @@ Tags: backup, seguridad, base de datos, archivos
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 
 Copias de seguridad completas del sitio: base de datos + archivos, verificación de integridad, descarga al equipo y programación con retención.
@@ -55,6 +55,9 @@ Por SSH, con los comandos de la sección «Cómo restaurar un backup» de la pro
 Se ejecuta con el tráfico del sitio. Si el sitio recibe pocas visitas, apuntá un cron real del sistema a wp-cron.php (el comando aparece en la página del plugin).
 
 == Changelog ==
+
+= 1.1.1 =
+* Corregido error de JavaScript que impedía que funcionaran todos los botones de la página (el alias local `const CRB_JS` chocaba con el `var CRB_JS` que inyecta wp_localize_script).
 
 = 1.1.0 =
 * Cada backup se guarda en su propia carpeta con la fecha y la hora dentro de la carpeta de backups.
