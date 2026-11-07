@@ -1,4 +1,9 @@
 
-
 # Carpeta de workflow
 workflow/
+
+# Copias de seguridad descargadas (contienen credenciales y datos sensibles)
+cafeteria-raiola_backup_*/
+db_*.sql.gz
+files_*.tar.gz
+manifest_*.json
