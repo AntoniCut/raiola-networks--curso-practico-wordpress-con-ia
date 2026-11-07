@@ -22,14 +22,14 @@ Documento vivo que registra todos los cambios que hacemos sobre la instalación 
 | Locale | es_ES |
 | Entorno | production |
 | Tema activo | Cafetería Raiola Child (hijo de Twenty Twenty-Five) |
-| Conexión IA | Novamira v1.12.14 por MCP (OAuth), configurada en `opencode.json` |
+| Conexión IA | Novamira v1.12.15 por MCP (OAuth), configurada en `opencode.json` |
 
 ### Plugins
 
 | Plugin | Versión | Estado |
 |---|---|---|
 | Elementor | 4.3.6 | Activo |
-| Novamira | 1.12.14 | Activo |
+| Novamira | 1.12.15 | Activo |
 | AI Provider for Anthropic | 1.0.5 | Activo |
 | Cafetería Raiola Backup | 1.1.1 | Activo |
 
