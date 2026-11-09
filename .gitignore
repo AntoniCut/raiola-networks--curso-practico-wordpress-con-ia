@@ -20,3 +20,5 @@ cafeteria-raiola-backup-*.zip
 
 # Hook del detector de diseño de Impeccable para el editor Codex (instalado por el updater de la skill)
 .codex/
+
+.playwright-mcp/
