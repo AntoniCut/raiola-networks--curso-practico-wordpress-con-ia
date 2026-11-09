@@ -17,3 +17,6 @@ cafeteria-raiola-backup-*.zip
 .cursor/mcp.json
 # Local AI runtime state
 .atl/
+
+# Hook del detector de diseño de Impeccable para el editor Codex (instalado por el updater de la skill)
+.codex/
