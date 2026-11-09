@@ -10,7 +10,7 @@ Documento vivo que registra todos los cambios que hacemos sobre la instalación 
 4. Entradas en orden cronológico **inverso**: la más reciente arriba.
 5. La sección **Estado actual** se verifica consultando el sitio por MCP, no de memoria.
 
-## Estado actual (verificado por MCP: 2026-11-07)
+## Estado actual (verificado por MCP: 2026-11-09)
 
 ### Sitio
 
@@ -33,6 +33,7 @@ Documento vivo que registra todos los cambios que hacemos sobre la instalación 
 | Novamira | 1.12.15 | Activo |
 | AI Provider for Anthropic | 1.0.5 | Activo |
 | Cafetería Raiola Backup | 1.1.1 | Activo |
+| Classic Editor | 1.7.0 | Activo |
 
 > Nota: los plugins empaquetados de ejemplo (Hello Dolly, Akismet) se eliminaron el 2026-11-06.
 
@@ -87,9 +88,9 @@ Documento vivo que registra todos los cambios que hacemos sobre la instalación 
 - Menús: ninguno creado todavía.
 - Usuarios: 1 administrador.
 - Zona horaria: Europe/Madrid · Idioma: es_ES · Semana empieza: lunes.
-- Modo mantenimiento Elementor: **Coming Soon («Próximamente»)** con plantilla en blanco ID 53 (canvas). Visitantes anónimos y buscadores ven HTTP 200 con página totalmente en blanco; los usuarios logueados ven el sitio real. Desactivarlo: Elementor → Herramientas → Modo mantenimiento → Deshabilitado.
+- Modo mantenimiento Elementor: **Deshabilitado** (desactivado el 2026-11-09; quedan guardadas `template_id=53` «Próximamente» y `exclude_mode=logged_in` por si se reactiva). Los visitantes anónimos vuelven a ver el sitio real.
 - WP-CLI: no instalado en el VPS.
-- Backups: plugin propio «Cafetería Raiola Backup» activo (v1.1.0), carpeta `/var/backups/cafeteria-raiola` (dueño www-data, fuera del docroot) con una subcarpeta por backup nombrada con el sello, programación diaria a las 03:00, retención 14 días. Último backup verificado: `2026-11-07_1359`.
+- Backups: plugin propio «Cafetería Raiola Backup» activo (v1.1.1), carpeta `/var/backups/cafeteria-raiola` (dueño www-data, fuera del docroot) con una subcarpeta por backup nombrada con el sello, programación diaria a las 03:00, retención 14 días. Último backup verificado: `2026-11-07_1359`.
 
 ### Infraestructura (VPS)
 
@@ -101,6 +102,8 @@ Documento vivo que registra todos los cambios que hacemos sobre la instalación 
 ## Bitácora
 
 ### 2026-11-09
+
+- **Desactivación del modo mantenimiento «Próximamente» (Coming Soon).** El usuario pidió desactivar el modo mantenimiento que se configuró el 2026-11-07 (plantilla en blanco ID 53, HTTP 200 para anónimos). Estado antes: opciones `elementor_maintenance_mode_mode=coming_soon`, `template_id=53`, `exclude_mode=logged_in`; los visitantes anónimos ven HTTP 200 con página en blanco (verificado con Playwright: título «Próximamente – Cafetería Raiola», body vacío, 0 widgets). Cambio por MCP (`execute-php`): se replica la acción de la UI «Elementor → Herramientas → Modo mantenimiento → Deshabilitado», guardando la opción `elementor_maintenance_mode_mode` como vacía. **Aplicado y verificado:** `elementor_maintenance_mode_mode` pasó de `coming_soon` a `''` (template_id 53 y exclude_mode quedan intactos, como hace la UI). Verificación contra el sitio real con Playwright (Chrome headless, visitante anónimo): portada y `/carta/` devuelven HTTP 200 con el tema real, títulos «Cafetería Raiola – Cafetería de especialidad» y «Carta – Cafetería Raiola», sin `elementor-maintenance-mode` ni canvas en blanco; el sitio real vuelve a ser visible para anónimos. La plantilla ID 53 no se borró (no se pidió).
 
 - **Puesta al día del ecosistema de agentes (gentle-ai + Engram) y migración de OpenCode al schema vigente.** El usuario pidió verificar que gentle-ai y todo su ecosistema estuvieran bien instalados en Cursor. Diagnóstico con `gentle-ai doctor` (8/8 ok) y `update`: gentle-ai 4.3.1 → **4.4.0** y engram 3.6.0 → **3.7.0** (backup previo `upgrade-20261109T175037Z`). `gentle-ai sync --agent cursor` regeneró la regla `~/.cursor/rules/gentle-ai.mdc` (608 → 614 líneas, hash distinto) y el estado quedó con `installed_binary_version: 4.4.0`; doctor posterior sigue en healthy con el check `installed:asset_version` ya activo. **OpenCode:** al abrir `opencode.json` el editor marcaba «Value is deprecated» en `experimental.mcp_timeout` y en `novamira`. Causa verificada contra el JSON Schema real (`https://opencode.ai/config.json`, OpenCode 1.19.0): el aviso de `novamira` no era del servidor sino del **contenedor `mcp` entero**, cuyo nodo tiene `deprecated: true`. Migrado a la forma vigente: `experimental.mcp_timeout: 60000` → `mcp.timeout: {startup: 60000, execution: 60000}`, y servidores de `mcp.<nombre>` → `mcp.servers.<nombre>` (se quitó `enabled: true`, que en la API nueva es el default). Verificado con `opencode mcp list`: 4 servidores `connected` (codebase-memory-mcp, context7, engram, novamira) y `mcp_timeout` ausente del config resuelto. Nota metodológica: `opencode mcp list` mezcla config global y de proyecto, así que la prueba se hizo con nombres de servidor únicos para no confundirse con los del global. **Engram scopeado por proyecto:** los procesos stdio MCP de Cursor arrancan en `$HOME` (no en el workspace), por lo que Engram resolvía `dir_basename` → `antonydev`. Se creó `.cursor/mcp.json` en el repo pasando `--project curso-practico-wordpress-con-ia`. Cursor **registra pero no activa** servidores MCP de proyecto: quedó `Disconnected` hasta activarlo a mano en Settings → MCPs, y luego hubo que desactivar `engram (User)` en este workspace para evitar dos procesos con el mismo nombre. Verificado tras la activación: `mem_current_project` devuelve el cwd del repo, proyecto `curso-practico-wordpress-con-ia` y `project_source: process_override`, y una búsqueda real recupera memorias scopeadas al proyecto. **Repo:** `.gitignore` ampliado con `.cursor/mcp.json` (config local con rutas absolutas) y `.atl/` (skill registry derivado de gentle-ai, regenerable con `gentle-ai skill-registry refresh`). En `opencode.json` los paths siguen siendo portables (`npx` + URL https), a diferencia del `mcp.json` local. Commit `b7aab52`. Sin cambios en el sitio: la tabla «Estado actual» no se modifica.
 
