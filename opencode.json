@@ -1,18 +1,20 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "experimental": {
-    "mcp_timeout": 60000
-  },
   "mcp": {
-    "novamira": {
-      "type": "local",
-      "command": [
-        "npx",
-        "-y",
-        "mcp-remote",
-        "https://cafeteria-raiola.antonydev.tech/wp-json/mcp/novamira-oauth"
-      ],
-      "enabled": true
+    "timeout": {
+      "startup": 60000,
+      "execution": 60000
+    },
+    "servers": {
+      "novamira": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "mcp-remote",
+          "https://cafeteria-raiola.antonydev.tech/wp-json/mcp/novamira-oauth"
+        ]
+      }
     }
   }
 }

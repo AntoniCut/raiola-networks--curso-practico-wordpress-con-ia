@@ -11,3 +11,9 @@ manifest_*.json
 
 # Paquetes de despliegue del plugin (se generan al vuelo; el código vive en plugins/)
 cafeteria-raiola-backup-*.zip
+
+
+# Config local de Cursor (lleva rutas absolutas de esta máquina)
+.cursor/mcp.json
+# Local AI runtime state
+.atl/
